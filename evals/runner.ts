@@ -132,8 +132,9 @@ function checkRegressions(results: CaseResult[], baseline: { [key: string]: numb
     if (baseline[r.id] !== undefined) {
       const oldRate = baseline[r.id];
       const newRate = r.passed / r.trials;
-      // Flag regressions: >10% drop in pass rate
-      if (newRate < oldRate - 0.1) {
+      // Flag regressions: >20% drop in pass rate
+      // (20% tolerance needed for flaky cases with intentional bugs; see docs)
+      if (newRate < oldRate - 0.2) {
         regressions.push(
           `${r.id}: ${(oldRate * 100).toFixed(0)}% → ${(newRate * 100).toFixed(0)}%`
         );

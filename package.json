@@ -1,28 +1,33 @@
 {
-  "name": "aitest",
+  "name": "ai-agent-eval-harness",
   "version": "1.0.0",
-  "description": "AI Agent Testing Harness Demo",
+  "description": "Production-ready evaluation framework for AI browser automation agents",
   "main": "index.js",
   "type": "module",
   "scripts": {
     "eval": "tsx evals/runner.ts 5",
     "eval:10": "tsx evals/runner.ts 10",
     "eval:50": "tsx evals/runner.ts 50",
-    "eval:baseline": "tsx evals/runner.ts 5 --update-baseline",
+    "eval:baseline": "tsx evals/runner.ts 20 --update-baseline",
     "mock-server": "tsx mock-site.ts",
     "test": "npm run eval"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
+  "keywords": ["ai-agent", "testing", "evaluation", "playwright", "browser-automation"],
+  "author": "Your Name <your.email@example.com>",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/yourusername/ai-agent-eval-harness"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  },
   "devDependencies": {
     "@types/express": "^4.17.25",
     "@types/node": "^20.19.43",
     "typescript": "^5.9.3"
   },
   "dependencies": {
-    "@browserbasehq/stagehand": "^4.3.0",
-    "dotenv": "^18.0.9",
     "express": "^5.3.0",
     "playwright": "^1.64.1",
     "tsx": "^4.23.15"

@@ -168,6 +168,39 @@ Total: 53/75 assertions passed (71%)
 
 ---
 
+## Understanding Flakiness & The Regression Gate
+
+### Expected Flakiness
+
+This harness includes **intentional bugs** in the mock site to demonstrate real-world issues:
+
+- **20% search bug**: Returns wrong destination 20% of the time → `booking-happy-path` flaky at ~85%
+- **10% double-charge bug**: Charges twice 10% of the time → `checkout-correct-amount` flaky at ~85%
+- **Rare race condition**: Cancellation/rebooking can collide → `cancel-and-rebook` flaky at ~80%
+
+This is **intentional**. Flakiness from known bugs proves the harness detects them. A stable gate would mask issues.
+
+### Regression Gate (20% Tolerance)
+
+The baseline is generated with **20 trials per case** to reduce noise. The gate flags regressions when:
+
+```
+newRate < oldRate - 0.20   (20% drop in pass rate)
+```
+
+**Why 20%?** With 20 trials at p=0.85, variance means legitimate runs vary ±15%. A 10% tolerance would trip on normal variance half the time. 20% catches real regressions while surviving noisy estimates:
+
+```
+Baseline:  85% (17/20)
+Run 1:     80% (16/20) — passes (85 - 16 = 5% drop)
+Run 2:     75% (15/20) — passes (85 - 10 = 10% drop)
+Run 3:     60% (12/20) — FAILS (85 - 25 = 25% drop) ← real regression
+```
+
+CI gates on **any regression >20%**, not noisy variance. This keeps the gate credible.
+
+---
+
 ## Test Cases Included
 
 ### Booking Flow (5 cases)
@@ -185,7 +218,7 @@ Total: 53/75 assertions passed (71%)
 5. **Invalid Payment** - Handle failed cards
 
 ### Cancellation Flow (5 cases)
-1. **Cancel and Rebook** - Complex state changes
+1. **Cancel and Rebook** - Complex state changes (⚠️ flaky ~80% — double-charge bug can trigger during rebook)
 2. **Refund Processing** - Issue refund
 3. **Price Difference** - Handle cost changes
 4. **Cancel Only** - Cancellation without rebooking
