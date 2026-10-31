@@ -20,14 +20,25 @@ export const checkoutCases: EvalCase[] = [
       },
       {
         kind: 'state',
-        name: 'exactly-one-charge',
+        name: 'exactly-one-order',
         check: async (ctx) => {
           const orders = await ctx.page.evaluate(() =>
             fetch('/api/orders').then((r) => r.json())
           );
-          // In a 10-second window, should only have 1 charge
-          const recentCharges = orders.filter((o:Order) => o.charged > 0);
-          return recentCharges.length === 1;
+          // Only one order should exist in this trial
+          return orders.length === 1;
+        },
+      },
+      {
+        kind: 'state',
+        name: 'charged-exactly-once',
+        check: async (ctx) => {
+          const orders = await ctx.page.evaluate(() =>
+            fetch('/api/orders').then((r) => r.json())
+          );
+          const order = orders[0];
+          // Should be charged exactly once, not double-charged
+          return order?.charged === 1;
         },
       },
     ],
@@ -50,8 +61,8 @@ export const checkoutCases: EvalCase[] = [
             fetch('/api/orders').then((r) => r.json())
           );
           const latest = orders[orders.length - 1];
-          // Payment should match the flight price
-          return latest?.flight?.price > 0;
+          // Charged amount should equal flight price
+          return latest?.flight?.price > 0 && latest?.charged === 1;
         },
       },
     ],

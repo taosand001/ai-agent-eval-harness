@@ -7,6 +7,7 @@ import express, { Express, Request, Response } from 'express';
 interface Flight {
   from: string;
   to: string;
+  date?: string;
   price: number;
   time: string;
   stops: number;
@@ -221,9 +222,9 @@ app.post('/api/search', (req: Request, res: Response): void => {
   const isBuggy = Math.random() < 0.2;
 
   const flights: Flight[] = [
-    { from, to: isBuggy ? 'WRONG' : to, price: 150, time: '10:00 AM', stops: 0 },
-    { from, to: isBuggy ? 'WRONG' : to, price: 120, time: '2:00 PM', stops: 0 },
-    { from, to: isBuggy ? 'WRONG' : to, price: 200, time: '6:00 PM', stops: 1 },
+    { from, to: isBuggy ? 'WRONG' : to, date, price: 150, time: '10:00 AM', stops: 0 },
+    { from, to: isBuggy ? 'WRONG' : to, date, price: 120, time: '2:00 PM', stops: 0 },
+    { from, to: isBuggy ? 'WRONG' : to, date, price: 200, time: '6:00 PM', stops: 1 },
   ];
 
   res.json(flights);

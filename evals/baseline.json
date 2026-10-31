@@ -1,5 +1,5 @@
 {
-  "booking-happy-path": 0.6,
+  "booking-happy-path": 0.4,
   "booking-with-connections": 1,
   "booking-error-recovery": 1,
   "booking-multiple-options": 1,

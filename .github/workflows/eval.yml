@@ -12,7 +12,7 @@ jobs:
     
     strategy:
       matrix:
-        node-version: [18.x, 20.x]
+        node-version: [20.x, 22.x]
     
     steps:
       - uses: actions/checkout@v4
@@ -27,11 +27,11 @@ jobs:
         run: npm ci
       
       - name: Install Playwright browsers
-        run: npx playwright install
+        run: npx playwright install --with-deps chromium
       
       - name: Start mock server
-        run: node mock-site.js &
-        continue-on-error: true
+        run: tsx mock-site.ts &
+        shell: bash
       
       - name: Wait for server
         run: |
@@ -45,23 +45,24 @@ jobs:
           done
           echo "Server did not start in time"
           exit 1
+        shell: bash
       
       - name: Run evaluation harness (10 trials)
         run: npm run eval:10
       
       - name: Upload traces on failure
         if: failure()
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
-          name: playwright-traces
-          path: traces/
+          name: playwright-traces-${{ matrix.node-version }}
+          path: evals/traces/
           retention-days: 7
       
       - name: Upload report
         if: always()
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
-          name: eval-report
+          name: eval-report-${{ matrix.node-version }}
           path: evals/report.json
           retention-days: 30
       
