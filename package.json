@@ -8,6 +8,7 @@
     "eval": "tsx evals/runner.ts 5",
     "eval:10": "tsx evals/runner.ts 10",
     "eval:50": "tsx evals/runner.ts 50",
+    "eval:baseline": "tsx evals/runner.ts 5 --update-baseline",
     "mock-server": "tsx mock-site.ts",
     "test": "npm run eval"
   },

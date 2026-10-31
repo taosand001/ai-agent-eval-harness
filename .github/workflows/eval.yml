@@ -8,6 +8,8 @@ on:
 
 jobs:
   eval:
+    permissions:
+      pull-requests: write
     runs-on: ubuntu-latest
     
     strategy:
@@ -30,7 +32,7 @@ jobs:
         run: npx playwright install --with-deps chromium
       
       - name: Start mock server
-        run: tsx mock-site.ts &
+        run: nohup npx tsx mock-site.ts > server.log 2>&1 &
         shell: bash
       
       - name: Wait for server
@@ -50,12 +52,17 @@ jobs:
       - name: Run evaluation harness (10 trials)
         run: npm run eval:10
       
+      - name: Server log
+        if: failure()
+        run: cat server.log || true
+        shell: bash
+      
       - name: Upload traces on failure
         if: failure()
         uses: actions/upload-artifact@v4
         with:
           name: playwright-traces-${{ matrix.node-version }}
-          path: evals/traces/
+          path: traces/
           retention-days: 7
       
       - name: Upload report
@@ -67,19 +74,20 @@ jobs:
           retention-days: 30
       
       - name: Comment PR with results
-        if: github.event_name == 'pull_request' && always()
+        if: github.event_name == 'pull_request' && matrix.node-version == '20.x' && always()
         uses: actions/github-script@v7
         with:
           script: |
             const fs = require('fs');
-            const report = JSON.parse(fs.readFileSync('evals/report.json', 'utf-8'));
-            
-            const reliable = report.results.filter(r => r.kind === 'reliable').length;
-            const flaky = report.results.filter(r => r.kind === 'flaky').length;
-            const broken = report.results.filter(r => r.kind === 'broken').length;
-            const passRate = Math.round((report.totalPassed / report.totalTrials) * 100);
-            
-            const comment = `
+            try {
+              const report = JSON.parse(fs.readFileSync('evals/report.json', 'utf-8'));
+              
+              const reliable = report.results.filter(r => r.kind === 'reliable').length;
+              const flaky = report.results.filter(r => r.kind === 'flaky').length;
+              const broken = report.results.filter(r => r.kind === 'broken').length;
+              const passRate = Math.round((report.totalPassed / report.totalTrials) * 100);
+              
+              const comment = `
 ## 🧪 Agent Eval Results
 - **Pass Rate:** ${passRate}%
 - **Reliable:** ${reliable} cases ✅
@@ -92,11 +100,14 @@ ${report.regressions.map(r => `- ${r}`).join('\n')}
 ` : ''}
 
 [View full report](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})
-            `;
-            
-            github.rest.issues.createComment({
-              issue_number: context.issue.number,
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              body: comment
-            });
+              `;
+              
+              github.rest.issues.createComment({
+                issue_number: context.issue.number,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                body: comment
+              });
+            } catch (error) {
+              console.log('Could not read report or comment:', error.message);
+            }

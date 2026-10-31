@@ -112,9 +112,9 @@ function loadBaseline(): { [key: string]: number } {
   }
 }
 
-function saveBaseline(results: CaseResult[]) {
-  // Only save baseline if --update-baseline flag is present
-  if (!process.argv.includes('--update-baseline')) {
+function saveBaseline(results: CaseResult[], updateBaseline: boolean) {
+  // Only save baseline if flag is explicitly requested
+  if (!updateBaseline) {
     return;
   }
 
@@ -144,7 +144,20 @@ function checkRegressions(results: CaseResult[], baseline: { [key: string]: numb
 }
 
 async function main() {
-  const trialsPerCase = process.argv[2] ? parseInt(process.argv[2]) : 5;
+  // Parse arguments: support both positional (5) and named (--trials 10 --update-baseline)
+  const arg = (name: string) => {
+    const i = process.argv.indexOf(`--${name}`);
+    return i > -1 ? process.argv[i + 1] : undefined;
+  };
+  
+  const positional = process.argv.slice(2).find((a) => /^\d+$/.test(a));
+  const trialsPerCase = Number(arg('trials') ?? positional ?? 5);
+  const updateBaseline = process.argv.includes('--update-baseline');
+
+  if (!Number.isInteger(trialsPerCase) || trialsPerCase < 1) {
+    console.error(`Invalid trials: ${trialsPerCase}`);
+    process.exit(1);
+  }
 
   console.log('\n' + '='.repeat(70));
   console.log('🧪 AI AGENT EVAL HARNESS');
@@ -221,14 +234,13 @@ async function main() {
   console.log(`Flaky: ${allResults.filter((r) => r.kind === 'flaky').length}`);
   console.log(`Broken: ${allResults.filter((r) => r.kind === 'broken').length}`);
 
-  // Save baseline for next run
-  // Save baseline for next run (only if --update-baseline is passed)
-  saveBaseline(allResults);
+  // Save baseline if requested
+  saveBaseline(allResults, updateBaseline);
 
   // Save JSON report
   fs.writeFileSync('evals/report.json', JSON.stringify(report, null, 2));
   console.log('\n✅ Report saved to evals/report.json');
-  if (process.argv.includes('--update-baseline')) {
+  if (updateBaseline) {
     console.log('✅ Baseline saved to evals/baseline.json');
   }
 
