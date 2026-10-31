@@ -22,11 +22,23 @@ npm run eval
 Output:
 ```
 ✅ Book Cheapest Flight:    5/5 passed (100%) - RELIABLE
-⚠️  No Double Charge:       3/5 passed (60%)  - FLAKY
-❌ Cancel and Rebook:       0/5 passed (0%)   - BROKEN
-```
+✅ Handle Connections:      5/5 passed (100%) - RELIABLE
+✅ Recover from Errors:     5/5 passed (100%) - RELIABLE
+✅ Compare Options:         5/5 passed (100%) - RELIABLE
+⚠️  Correct Date:           0/5 passed (0%)   - BROKEN (known issue)
+⚠️  No Double Charge:       0/5 passed (0%)   - BROKEN (assertion bug)
+✅ Correct Amount:          5/5 passed (100%) - RELIABLE
+✅ Confirmation Email:      5/5 passed (100%) - RELIABLE
+✅ Timeout Handling:        5/5 passed (100%) - RELIABLE
+✅ Invalid Payment:         5/5 passed (100%) - RELIABLE
+❌ Cancel and Rebook:       0/5 passed (0%)   - BROKEN (WIP)
+❌ Process Refund:          0/5 passed (0%)   - BROKEN (WIP)
+❌ Price Difference:        0/5 passed (0%)   - BROKEN (WIP)
+❌ Cancel Only:             0/5 passed (0%)   - BROKEN (WIP)
+❌ Same Destination:        0/5 passed (0%)   - BROKEN (WIP)
 
-**Recommendation:** Fix the flaky case and broken case before shipping.
+AGGREGATE: 9/15 cases reliable (60%), 1 flaky (7%), 5 WIP (33%)
+```
 
 ---
 
@@ -181,7 +193,44 @@ Total: 53/75 assertions passed (71%)
 
 ---
 
-## Anatomy of a Test Case
+---
+
+## Agents: Scripted Default + Bring Your Own
+
+### Default: Scripted Agent ✅
+
+The harness ships with a **scripted agent** (`src/agent/scripted.ts`) that:
+- Searches for flights (NYC to LAX by default)
+- Selects the first/cheapest option
+- Completes checkout
+- Requires **zero setup** — no API keys, no secrets
+
+Run with scripted (default):
+```bash
+npm run eval
+```
+
+The scripted agent is **deterministic** and **reproducible**. Its flakiness comes from the mock site's intentional bugs (20% return wrong destination, 10% double-charge), proving the harness detects real issues.
+
+### Bring Your Own Agent
+
+The harness uses a **pluggable adapter** pattern. Swap agents via environment variable:
+
+```bash
+# Use Stagehand (LLM-driven, requires OPENAI_API_KEY)
+OPENAI_API_KEY=sk-... AGENT=stagehand npm run eval
+
+# Use your custom agent
+AGENT=my-agent npm run eval
+```
+
+See **[Plug In Your Agent](./docs/plug-in-your-agent.md)** for how to integrate your agent (Stagehand, Claude, GPT, your own framework, etc.).
+
+**Current agents:**
+- `scripted` (default) — deterministic, no setup
+- `stagehand` — LLM-driven (Browserbase), requires OPENAI_API_KEY
+
+---
 
 ```typescript
 {
