@@ -206,12 +206,6 @@ async function main() {
   console.log(`Flaky: ${allResults.filter((r) => r.kind === 'flaky').length}`);
   console.log(`Broken: ${allResults.filter((r) => r.kind === 'broken').length}`);
 
-  if (regressions.length > 0) {
-    console.log('\n⚠️  REGRESSIONS DETECTED:');
-    regressions.forEach((r) => console.log(`   - ${r}`));
-    process.exit(1);
-  }
-
   // Save baseline for next run
   saveBaseline(allResults);
 
@@ -219,6 +213,12 @@ async function main() {
   fs.writeFileSync('evals/report.json', JSON.stringify(report, null, 2));
   console.log('\n✅ Report saved to evals/report.json');
   console.log('✅ Baseline saved to evals/baseline.json');
+
+  if (regressions.length > 0) {
+    console.log('\n⚠️  REGRESSIONS DETECTED:');
+    regressions.forEach((r) => console.log(`   - ${r}`));
+    process.exit(1);
+  }
 }
 
 main().catch(console.error);
