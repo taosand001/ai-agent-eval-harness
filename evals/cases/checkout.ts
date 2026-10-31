@@ -36,9 +36,8 @@ export const checkoutCases: EvalCase[] = [
           const orders = await ctx.page.evaluate(() =>
             fetch('/api/orders').then((r) => r.json())
           );
-          const order = orders[0];
-          // Should be charged exactly once, not double-charged
-          return order?.charged === 1;
+          // All orders should be charged exactly once (not double-charged)
+          return orders.every((o: any) => o.charged === 1);
         },
       },
     ],
