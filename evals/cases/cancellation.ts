@@ -1,7 +1,7 @@
 // Cancellation and rebooking test cases - complex stateful flows
 
 import type { EvalCase } from '../../src/types.js';
-import { Order } from '../../mock-site.js';
+import type { Order } from '../../mock-site.js';
 
 export const cancellationCases: EvalCase[] = [
   {

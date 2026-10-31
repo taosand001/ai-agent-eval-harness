@@ -113,6 +113,11 @@ function loadBaseline(): { [key: string]: number } {
 }
 
 function saveBaseline(results: CaseResult[]) {
+  // Only save baseline if --update-baseline flag is present
+  if (!process.argv.includes('--update-baseline')) {
+    return;
+  }
+
   const baseline: { [key: string]: number } = {};
   results.forEach((r) => {
     baseline[r.id] = r.passed / r.trials;
@@ -217,12 +222,15 @@ async function main() {
   console.log(`Broken: ${allResults.filter((r) => r.kind === 'broken').length}`);
 
   // Save baseline for next run
+  // Save baseline for next run (only if --update-baseline is passed)
   saveBaseline(allResults);
 
   // Save JSON report
   fs.writeFileSync('evals/report.json', JSON.stringify(report, null, 2));
   console.log('\n✅ Report saved to evals/report.json');
-  console.log('✅ Baseline saved to evals/baseline.json');
+  if (process.argv.includes('--update-baseline')) {
+    console.log('✅ Baseline saved to evals/baseline.json');
+  }
 
   if (regressions.length > 0) {
     console.log('\n⚠️  REGRESSIONS DETECTED:');

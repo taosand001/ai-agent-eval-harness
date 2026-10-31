@@ -1,7 +1,7 @@
 // Flight booking test cases
 
 import type { EvalCase } from '../../src/types.ts';
-import { Order } from '../../mock-site.ts';
+import type { Order } from '../../mock-site.ts';
 
 export const bookingCases: EvalCase[] = [
   {

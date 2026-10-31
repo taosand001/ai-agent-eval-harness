@@ -1,7 +1,7 @@
 // Checkout safety test cases - catch bugs like double-charging
 
 import type { EvalCase } from '../../src/types.js';
-import { Order } from '../../mock-site.js';
+import type { Order } from '../../mock-site.js';
 
 export const checkoutCases: EvalCase[] = [
   {
