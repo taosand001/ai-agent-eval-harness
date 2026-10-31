@@ -3,6 +3,7 @@
 import { chromium, Browser } from 'playwright';
 import type { EvalCase, Trial, CaseResult, EvalReport, RunContext } from '../src/types.js';
 import { checkAssertion } from '../src/assertions.js';
+import { selectAgent } from '../src/agent/index.js';
 import { bookingCases } from './cases/booking.js';
 import { checkoutCases } from './cases/checkout.js';
 import { cancellationCases } from './cases/cancellation.js';
@@ -10,6 +11,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 
 const allCases = [...bookingCases, ...checkoutCases, ...cancellationCases];
+const agent = selectAgent();
 
 async function runTrial(browser: Browser, evalCase: EvalCase, trialNum: number): Promise<Trial> {
   let context = null;
@@ -32,12 +34,18 @@ async function runTrial(browser: Browser, evalCase: EvalCase, trialNum: number):
       tracePath,
     };
 
-    // Setup the case
+    // Reset state between trials (clear accumulated orders)
+    await page.request.post('http://localhost:3000/api/reset');
+
+    // Setup the case (navigate, seed data, etc.)
     if (evalCase.setup) {
       await evalCase.setup(ctx);
     }
 
-    // Run assertions
+    // Run the agent to perform the task
+    await agent(ctx, evalCase.task);
+
+    // Run assertions to verify the outcome
     const outcomes = await Promise.all(
       evalCase.assertions.map((a) => checkAssertion(a, ctx))
     );
@@ -115,9 +123,11 @@ function saveBaseline(results: CaseResult[]) {
 function checkRegressions(results: CaseResult[], baseline: { [key: string]: number }): string[] {
   const regressions: string[] = [];
   results.forEach((r) => {
-    if (baseline[r.id]) {
+    // Check if baseline exists for this case (fixed falsy check)
+    if (baseline[r.id] !== undefined) {
       const oldRate = baseline[r.id];
       const newRate = r.passed / r.trials;
+      // Flag regressions: >10% drop in pass rate
       if (newRate < oldRate - 0.1) {
         regressions.push(
           `${r.id}: ${(oldRate * 100).toFixed(0)}% → ${(newRate * 100).toFixed(0)}%`

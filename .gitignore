@@ -12,4 +12,3 @@ traces/
 *.swp
 *.swo
 evals/report.json
-evals/baseline.json

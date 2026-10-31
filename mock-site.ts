@@ -96,6 +96,11 @@ app.get('/', (_req: Request, res: Response): void => {
 
       <div id="confirmation"></div>
 
+      <div id="bookings" style="display:none; border: 1px solid #f8d7da; padding: 15px; margin-top: 20px;">
+        <h2>Your Bookings</h2>
+        <div id="bookingsList"></div>
+      </div>
+
       <script>
         let selectedFlight = null;
 
@@ -158,8 +163,48 @@ app.get('/', (_req: Request, res: Response): void => {
               </div>
             \`;
             document.getElementById('checkout').style.display = 'none';
+            showBookings(email);
           } else {
             alert('Booking failed: ' + result.error);
+          }
+        }
+
+        async function showBookings(email) {
+          const res = await fetch('/api/orders?email=' + encodeURIComponent(email));
+          const userOrders = await res.json();
+          
+          if (userOrders.length > 0) {
+            document.getElementById('bookings').style.display = 'block';
+            let html = '';
+            userOrders.forEach((order, idx) => {
+              html += \`
+                <div style="border-bottom: 1px solid #ddd; padding: 10px 0;">
+                  <p><strong>\${order.flight.from} → \${order.flight.to}</strong> | $\${order.flight.price}</p>
+                  <p>Status: \${order.status || 'confirmed'}</p>
+                  <button onclick="cancelBooking('\${order.confirmationNumber}')" style="background: #dc3545;">Cancel</button>
+                </div>
+              \`;
+            });
+            document.getElementById('bookingsList').innerHTML = html;
+          }
+        }
+
+        async function cancelBooking(confirmationNumber) {
+          if (!confirm('Are you sure you want to cancel this booking?')) return;
+          
+          const res = await fetch('/api/cancel', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ confirmationNumber })
+          });
+          
+          const result = await res.json();
+          if (result.success) {
+            alert('Booking cancelled successfully');
+            const email = document.getElementById('email').value;
+            if (email) showBookings(email);
+          } else {
+            alert('Cancellation failed: ' + result.error);
           }
         }
       </script>
@@ -228,6 +273,26 @@ app.get('/api/orders', (req: Request, res: Response): void => {
   const email = req.query.email as string | undefined;
   const userOrders = email ? orders.filter((o) => o.email === email) : orders;
   res.json(userOrders);
+});
+
+// API to cancel a booking
+app.post('/api/cancel', (req: Request, res: Response): void => {
+  const { confirmationNumber } = req.body as { confirmationNumber: string };
+
+  const order = orders.find((o) => o.confirmationNumber === confirmationNumber);
+  if (!order) {
+    res.json({ success: false, error: 'Booking not found' });
+    return;
+  }
+
+  order.status = 'cancelled';
+  res.json({ success: true, message: 'Booking cancelled' });
+});
+
+// API to reset state between trials
+app.post('/api/reset', (_req: Request, res: Response): void => {
+  orders.length = 0;
+  res.json({ ok: true, message: 'Orders cleared' });
 });
 
 // ============================================================================
