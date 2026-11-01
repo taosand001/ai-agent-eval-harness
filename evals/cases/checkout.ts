@@ -60,10 +60,10 @@ export const checkoutCases: EvalCase[] = [
             fetch('/api/orders').then((r) => r.json())
           );
           const latest = orders[orders.length - 1];
-          if (!latest?.flight?.price || !latest?.charged) return false;
-          // Total charged should equal flight price (price * charges)
-          // With intentional 10% bug, total charged will be price * 2 in ~10% of trials
-          return latest.charged * latest.flight.price === latest.flight.price;
+          if (!latest?.flight?.price || latest?.charged === undefined) return false;
+          // Total charged should equal exactly one flight price
+          // With intentional 10% double-charge bug, total will be 2x in ~10% of trials
+          return latest.charged === 1 && latest.flight.price > 0;
         },
       },
     ],

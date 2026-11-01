@@ -3,7 +3,7 @@
 import { chromium, Browser } from 'playwright';
 import type { EvalCase, Trial, CaseResult, EvalReport, RunContext } from '../src/types.js';
 import { checkAssertion } from '../src/assertions.js';
-import { selectAgent } from '../src/agent/index.js';
+import { selectAgent, type AgentAdapter } from '../src/agent/index.js';
 import { bookingCases } from './cases/booking.js';
 import { checkoutCases } from './cases/checkout.js';
 import { cancellationCases } from './cases/cancellation.js';
@@ -11,9 +11,13 @@ import * as fs from 'fs';
 import * as path from 'path';
 
 const allCases = [...bookingCases, ...checkoutCases, ...cancellationCases];
-const agent = selectAgent();
 
-async function runTrial(browser: Browser, evalCase: EvalCase, trialNum: number): Promise<Trial> {
+async function runTrial(
+  browser: Browser,
+  evalCase: EvalCase,
+  trialNum: number,
+  agent: AgentAdapter
+): Promise<Trial> {
   let context = null;
   let page = null;
   const startTime = Date.now();
@@ -160,6 +164,9 @@ async function main() {
     process.exit(1);
   }
 
+  // Select agent (lazy-loads stagehand if requested, otherwise returns scripted)
+  const agent = await selectAgent();
+
   console.log('\n' + '='.repeat(70));
   console.log('🧪 AI AGENT EVAL HARNESS');
   console.log('='.repeat(70));
@@ -180,7 +187,7 @@ async function main() {
     const trials: Trial[] = [];
     for (let i = 1; i <= trialsPerCase; i++) {
       process.stdout.write(`   Trial ${i}...`);
-      const trial = await runTrial(browser, evalCase, i);
+      const trial = await runTrial(browser, evalCase, i, agent);
       trials.push(trial);
       console.log(` ${trial.pass ? '✅' : '❌'}`);
     }
