@@ -2,7 +2,6 @@
   "name": "ai-agent-eval-harness",
   "version": "1.0.0",
   "description": "Production-ready evaluation framework for AI browser automation agents",
-  "main": "index.js",
   "type": "module",
   "scripts": {
     "eval": "tsx evals/runner.ts 5",
@@ -13,11 +12,11 @@
     "test": "npm run eval"
   },
   "keywords": ["ai-agent", "testing", "evaluation", "playwright", "browser-automation"],
-  "author": "Your Name <your.email@example.com>",
+  "author": "",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/yourusername/ai-agent-eval-harness"
+    "url": "https://github.com/your-org/ai-agent-eval-harness"
   },
   "engines": {
     "node": ">=20.0.0"

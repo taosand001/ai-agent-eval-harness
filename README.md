@@ -91,7 +91,7 @@ Result: 3/5 passed = FLAKY (not reliable)
 }
 ```
 
-**Layer 3: Judge** - Was the behavior correct? (requires LLM)
+**Layer 3: Judge** - Was the behavior correct? (interface only — not currently implemented)
 ```typescript
 {
   kind: 'judge',
@@ -99,22 +99,24 @@ Result: 3/5 passed = FLAKY (not reliable)
   threshold: 0.8
 }
 ```
+*Judge layer is defined in the architecture but currently returns `pass: true` unconditionally. To use: implement with OpenAI and Zod schema, or remove from cases.*
+
 
 ### 4. Regression Tracking (CI Gate)
 
 First run establishes baseline:
 ```json
 {
-  "booking-happy-path": 1.0,
-  "checkout-no-double-charge": 1.0,
-  "cancel-and-rebook": 0.8
+  "booking-happy-path": 0.8,
+  "checkout-no-double-charge": 0.9,
+  "cancel-and-rebook": 0.65
 }
 ```
 
 Next runs check for regressions:
 ```
 ❌ REGRESSION DETECTED:
-- booking-happy-path: 100% → 60% (drop of 40%)
+- booking-happy-path: 80% → 50% (drop of 30%)
 CI FAILED (merge blocked)
 ```
 
@@ -140,32 +142,6 @@ npm run eval:10
 
 # Run with 50 trials (for production sign-off)
 npm run eval:50
-```
-
-### Output
-
-```
-🧪 AI AGENT EVAL HARNESS
-
-📝 Book Cheapest Flight
-   Running 5 trials...
-   Trial 1... ✅
-   Trial 2... ✅
-   Trial 3... ❌
-   Trial 4... ✅
-   Trial 5... ✅
-   Result: 4/5 passed
-   Status: FLAKY
-
-...
-
-📋 TEST RESULTS SUMMARY
-✅ Booking Happy Path:       5/5 (RELIABLE)
-⚠️  No Double Charge:        4/5 (FLAKY)
-❌ Cancel and Rebook:        2/5 (FLAKY)
-
-📊 AGGREGATE METRICS
-Total: 53/75 assertions passed (71%)
 ```
 
 ---
@@ -221,7 +197,7 @@ CI gates on **any regression >20%**, not noisy variance. This keeps the gate cre
 5. **Invalid Payment** - Handle failed cards
 
 ### Cancellation Flow (5 cases)
-1. **Cancel and Rebook** - Complex state changes (⚠️ flaky ~80% — double-charge bug can trigger during rebook)
+1. **Cancel and Rebook** - Complex state changes (⚠️ flaky ~65% — double-charge bug can trigger during rebook)
 2. **Refund Processing** - Issue refund
 3. **Price Difference** - Handle cost changes
 4. **Cancel Only** - Cancellation without rebooking
@@ -345,9 +321,9 @@ The harness tracks a baseline of pass rates:
 
 ```json
 {
-  "booking-happy-path": 1.0,
-  "checkout-no-double-charge": 1.0,
-  "cancel-and-rebook": 0.8
+  "booking-happy-path": 0.8,
+  "checkout-no-double-charge": 0.9,
+  "cancel-and-rebook": 0.65
 }
 ```
 
@@ -474,67 +450,6 @@ A: Yes, but no Playwright. Instead of DOM assertions, you check the text respons
 ├─────────────────────┤
 │  Reporter           │ Beautiful output + JSON report
 └─────────────────────┘
-```
-
-### Cost Tracking
-
-Each assertion execution tracks cost (if using LLM judges):
-
-```json
-{
-  "case": "booking",
-  "trial": 1,
-  "costUsd": 0.03,
-  "breakdown": {
-    "dom_assertions": 0.0,
-    "state_assertions": 0.0,
-    "judge_assertion": 0.03
-  }
-}
-```
-
----
-
-## Example Output
-
-```
-🧪 AI AGENT EVAL HARNESS
-
-📝 Book Cheapest Flight
-   Running 5 trials...
-   Trial 1... ✅
-   Trial 2... ✅
-   Trial 3... ✅
-   Trial 4... ✅
-   Trial 5... ✅
-   Result: 5/5 passed
-   Status: RELIABLE
-
-📝 No Double Charge
-   Running 5 trials...
-   Trial 1... ✅
-   Trial 2... ❌ (charged twice)
-   Trial 3... ✅
-   Trial 4... ✅
-   Trial 5... ❌ (charged twice)
-   Result: 3/5 passed
-   Status: FLAKY
-
-📋 TEST RESULTS SUMMARY
-✅ Book Cheapest Flight:     5/5 (RELIABLE)
-⚠️  No Double Charge:        3/5 (FLAKY)
-❌ Cancel and Rebook:        2/5 (FLAKY)
-
-📊 AGGREGATE METRICS
-Total: 53/75 assertions passed (71%)
-Reliable: 5
-Flaky: 8
-Broken: 2
-
-⚠️  REGRESSIONS DETECTED:
-- checkout-no-double-charge: 100% → 60% (dropped 40%)
-
-CI FAILED
 ```
 
 ---

@@ -61,9 +61,9 @@ export const checkoutCases: EvalCase[] = [
           );
           const latest = orders[orders.length - 1];
           if (!latest?.flight?.price || latest?.charged === undefined) return false;
-          // Total charged should equal exactly one flight price
-          // With intentional 10% double-charge bug, total will be 2x in ~10% of trials
-          return latest.charged === 1 && latest.flight.price > 0;
+          // Verify charge count is 1 (not double-charged)
+          // This tests the same underlying bug as checkout-no-double-charge
+          return latest.charged === 1;
         },
       },
     ],
