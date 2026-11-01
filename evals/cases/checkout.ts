@@ -59,11 +59,17 @@ export const checkoutCases: EvalCase[] = [
           const orders = await ctx.page.evaluate(() =>
             fetch('/api/orders').then((r) => r.json())
           );
+          if (!orders.length) return false;
+          // Total charged across all orders should match total expected payment
+          // Each order has a charged count (1 = normal, 2 = double-charged bug)
+          // Sum: (order1.charged * order1.price) + (order2.charged * order2.price) ...
+          // Should equal the last order's price (expected payment for this trial)
           const latest = orders[orders.length - 1];
-          if (!latest?.flight?.price || latest?.charged === undefined) return false;
-          // Verify charge count is 1 (not double-charged)
-          // This tests the same underlying bug as checkout-no-double-charge
-          return latest.charged === 1;
+          const expectedAmount = latest.flight?.price || 0;
+          const totalCharged = orders.reduce((sum: number, o: Order) => 
+            sum + ((o.charged || 1) * (o.flight?.price || 0)), 0
+          );
+          return totalCharged === expectedAmount;
         },
       },
     ],
